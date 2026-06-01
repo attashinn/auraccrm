@@ -16,6 +16,7 @@ import {
   Bell,
   Search,
   Loader2,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { clerkLightAppearance } from "@/lib/clerk-appearance";
@@ -33,6 +34,7 @@ const navigation: NavItem[] = [
   { name: "Leads", href: "/dashboard/leads", icon: Users2 },
   { name: "Deals", href: "/dashboard/deals", icon: DollarSign },
   { name: "Tasks", href: "/dashboard/tasks", icon: CheckSquare },
+  { name: "Invoices", href: "/dashboard/invoices", icon: FileText },
   { name: "Organization", href: "/dashboard/organization", icon: Building2 },
 ];
 
