@@ -1,0 +1,223 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum MembershipRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  PROPOSAL
+  WON
+  LOST
+}
+
+enum DealStage {
+  NEW
+  CONTACTED
+  QUALIFIED
+  PROPOSAL
+  WON
+  LOST
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+// 1. Organizations (Tenants)
+model Organization {
+  id        String   @id @default(uuid()) @db.Uuid
+  clerkId   String?  @unique @map("clerk_id") @db.VarChar(255)
+  name      String   @db.VarChar(255)
+  slug      String   @unique @db.VarChar(255)
+  onboardingCompleted Boolean @default(false) @map("onboarding_completed")
+  onboardingData      Json?   @map("onboarding_data")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  memberships Membership[]
+  leads       Lead[]
+  contacts    Contact[]
+  deals       Deal[]
+  tasks       Task[]
+  notes       Note[]
+
+  @@map("organizations")
+}
+
+// 2. Users (Global Registry)
+model User {
+  id        String   @id @default(uuid()) @db.Uuid
+  clerkId   String   @unique @map("clerk_id") @db.VarChar(255)
+  email     String   @unique @db.VarChar(255)
+  firstName String?  @map("first_name") @db.VarChar(100)
+  lastName  String?  @map("last_name") @db.VarChar(100)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  memberships Membership[]
+
+  @@map("users")
+}
+
+// 3. Memberships (Tenant Access Link)
+model Membership {
+  id             String         @id @default(uuid()) @db.Uuid
+  organizationId String         @map("organization_id") @db.Uuid
+  userId         String         @map("user_id") @db.Uuid
+  role           MembershipRole @default(MEMBER)
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime       @updatedAt @map("updated_at") @db.Timestamptz
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignedTasks Task[]
+  createdNotes  Note[]
+
+  @@unique([userId, organizationId], name: "unique_user_org")
+  @@index([organizationId])
+  @@index([userId])
+  @@map("memberships")
+}
+
+// 4. Leads (Unqualified Prospects)
+model Lead {
+  id             String     @id @default(uuid()) @db.Uuid
+  organizationId String     @map("organization_id") @db.Uuid
+  firstName      String     @map("first_name") @db.VarChar(100)
+  lastName       String?    @map("last_name") @db.VarChar(100)
+  email          String?    @db.VarChar(255)
+  phone          String?    @db.VarChar(50)
+  company        String?    @db.VarChar(255)
+  source         String?    @db.VarChar(100)
+  status         LeadStatus @default(NEW)
+  notes          String?    @db.Text
+  value          Decimal    @default(0.00) @db.Decimal(12, 2)
+  createdAt      DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime   @updatedAt @map("updated_at") @db.Timestamptz
+
+  organization  Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  tasks         Task[]
+  notesRelation Note[]
+  deals         Deal[]
+
+  @@index([organizationId, status])
+  @@map("leads")
+}
+
+// 5. Contacts (People)
+model Contact {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  firstName      String   @map("first_name") @db.VarChar(100)
+  lastName       String   @map("last_name") @db.VarChar(100)
+  email          String?  @db.VarChar(255)
+  phone          String?  @db.VarChar(50)
+  jobTitle       String?  @map("job_title") @db.VarChar(150)
+  companyName    String?  @map("company_name") @db.VarChar(255)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  deals        Deal[]
+  tasks        Task[]
+  notes        Note[]
+
+  @@index([organizationId])
+  @@map("contacts")
+}
+
+// 6. Deals (Qualified Opportunities)
+model Deal {
+  id                 String    @id @default(uuid()) @db.Uuid
+  organizationId     String    @map("organization_id") @db.Uuid
+  contactId          String?   @map("contact_id") @db.Uuid
+  leadId             String?   @map("lead_id") @db.Uuid
+  name               String    @db.VarChar(255)
+  value              Decimal   @default(0.00) @db.Decimal(12, 2)
+  stage              DealStage @default(NEW)
+  expectedCloseDate  DateTime? @map("expected_close_date") @db.Date
+  notes              String?   @db.Text
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  organization  Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  contact       Contact?     @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  lead          Lead?        @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  tasks         Task[]
+  notesRelation Note[]
+
+  @@index([organizationId, stage])
+  @@map("deals")
+}
+
+// 7. Tasks (Actionables)
+model Task {
+  id                      String       @id @default(uuid()) @db.Uuid
+  organizationId          String       @map("organization_id") @db.Uuid
+  assignedToMembershipId  String?      @map("assigned_to_membership_id") @db.Uuid
+  title                   String       @db.VarChar(255)
+  description             String?      @db.Text
+  dueDate                 DateTime?    @map("due_date") @db.Timestamptz
+  status                  TaskStatus   @default(TODO)
+  priority                TaskPriority @default(MEDIUM)
+  leadId                  String?      @map("lead_id") @db.Uuid
+  contactId               String?      @map("contact_id") @db.Uuid
+  dealId                  String?      @map("deal_id") @db.Uuid
+  createdAt               DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt               DateTime     @updatedAt @map("updated_at") @db.Timestamptz
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  assignedTo   Membership?  @relation(fields: [assignedToMembershipId], references: [id], onDelete: SetNull)
+  lead         Lead?        @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  contact      Contact?     @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  deal         Deal?        @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, status])
+  @@index([assignedToMembershipId])
+  @@map("tasks")
+}
+
+// 8. Notes (Activity Logs)
+model Note {
+  id                    String   @id @default(uuid()) @db.Uuid
+  organizationId        String   @map("organization_id") @db.Uuid
+  createdByMembershipId String?  @map("created_by_membership_id") @db.Uuid
+  content               String   @db.Text
+  leadId                String?  @map("lead_id") @db.Uuid
+  contactId             String?  @map("contact_id") @db.Uuid
+  dealId                String?  @map("deal_id") @db.Uuid
+  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt             DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdBy    Membership?  @relation(fields: [createdByMembershipId], references: [id], onDelete: SetNull)
+  lead         Lead?        @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  contact      Contact?     @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  deal         Deal?        @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([leadId])
+  @@index([contactId])
+  @@index([dealId])
+  @@map("notes")
+}
