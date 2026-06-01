@@ -1,6 +1,5 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 interface InvoiceItem {
   description: string;
@@ -159,6 +158,12 @@ function buildInvoiceHTML(params: SendInvoiceEmailParams): string {
 
 export async function sendInvoiceEmail(params: SendInvoiceEmailParams) {
   const { to, recipientName, senderOrgName, invoiceNumber, total } = params;
+
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    throw new Error("RESEND_API_KEY is not defined in the environment variables.");
+  }
+  const resend = new Resend(apiKey);
 
   const html = buildInvoiceHTML(params);
 
