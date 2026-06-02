@@ -261,26 +261,28 @@ export default function InvoicePreview({ invoice }: { invoice: Invoice }) {
 
           {/* Items */}
           <div className="px-8 py-6">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b-2 border-border">
-                  <th className="text-left pb-3 text-xs font-bold text-muted uppercase tracking-wider">Description</th>
-                  <th className="text-center pb-3 text-xs font-bold text-muted uppercase tracking-wider">Qty</th>
-                  <th className="text-right pb-3 text-xs font-bold text-muted uppercase tracking-wider">Rate</th>
-                  <th className="text-right pb-3 text-xs font-bold text-muted uppercase tracking-wider">Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {invoice.items.map((item) => (
-                  <tr key={item.id} className="border-b border-[#f0f0f0]">
-                    <td className="py-3 text-sm text-foreground">{item.description}</td>
-                    <td className="py-3 text-sm text-foreground text-center">{Number(item.quantity)}</td>
-                    <td className="py-3 text-sm text-foreground text-right">{fmt(item.unitPrice)}</td>
-                    <td className="py-3 text-sm font-semibold text-foreground text-right">{fmt(item.total)}</td>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[500px]">
+                <thead>
+                  <tr className="border-b-2 border-border">
+                    <th className="text-left pb-3 text-xs font-bold text-muted uppercase tracking-wider">Description</th>
+                    <th className="text-center pb-3 text-xs font-bold text-muted uppercase tracking-wider">Qty</th>
+                    <th className="text-right pb-3 text-xs font-bold text-muted uppercase tracking-wider">Rate</th>
+                    <th className="text-right pb-3 text-xs font-bold text-muted uppercase tracking-wider">Amount</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {invoice.items.map((item) => (
+                    <tr key={item.id} className="border-b border-[#f0f0f0]">
+                      <td className="py-3 text-sm text-foreground">{item.description}</td>
+                      <td className="py-3 text-sm text-foreground text-center">{Number(item.quantity)}</td>
+                      <td className="py-3 text-sm text-foreground text-right">{fmt(item.unitPrice)}</td>
+                      <td className="py-3 text-sm font-semibold text-foreground text-right">{fmt(item.total)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
             {/* Totals */}
             <div className="flex justify-end mt-6">

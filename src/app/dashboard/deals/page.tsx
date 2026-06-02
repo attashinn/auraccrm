@@ -345,111 +345,113 @@ export default function DealsPage() {
         </div>
       ) : (
         /* Kanban Board Area */
-        <div className="flex flex-col flex-1 border border-border rounded-2xl overflow-hidden bg-white select-none">
-          {/* Header Row */}
-          <div className="flex divide-x divide-border/60 bg-[#fafbfa] border-b border-border/80">
-            {STAGES.map((stage) => {
-              const stageDeals = deals.filter((d) => d.stage === stage.key);
-              const stageSum = stageDeals.reduce((s, d) => s + d.value, 0);
+        <div className="w-full overflow-x-auto border border-border rounded-2xl bg-white select-none">
+          <div className="min-w-[1200px] flex flex-col flex-1">
+            {/* Header Row */}
+            <div className="flex divide-x divide-border/60 bg-[#fafbfa] border-b border-border/80">
+              {STAGES.map((stage) => {
+                const stageDeals = deals.filter((d) => d.stage === stage.key);
+                const stageSum = stageDeals.reduce((s, d) => s + d.value, 0);
 
-              return (
-                <div key={stage.key} className="flex-1 min-w-[200px] p-4 text-left">
-                  <div className="flex justify-between items-baseline">
-                    <span className="text-sm font-bold text-foreground tracking-tight">{stage.label}</span>
-                    <span className="text-xs text-muted font-bold">{stageDeals.length}</span>
+                return (
+                  <div key={stage.key} className="flex-1 min-w-[200px] p-4 text-left">
+                    <div className="flex justify-between items-baseline">
+                      <span className="text-sm font-bold text-foreground tracking-tight">{stage.label}</span>
+                      <span className="text-xs text-muted font-bold">{stageDeals.length}</span>
+                    </div>
+                    <div className="flex justify-between items-baseline mt-1 text-xs text-muted">
+                      <span>Total amount</span>
+                      <span className="font-bold text-foreground">{formatCurrency(stageSum)}</span>
+                    </div>
                   </div>
-                  <div className="flex justify-between items-baseline mt-1 text-xs text-muted">
-                    <span>Total amount</span>
-                    <span className="font-bold text-foreground">{formatCurrency(stageSum)}</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
 
-          {/* Columns Row */}
-          <div className="flex flex-1 divide-x divide-border/60 min-h-[58vh] overflow-x-auto overflow-y-hidden">
-            {STAGES.map((stage) => {
-              const stageDeals = deals.filter((d) => d.stage === stage.key);
+            {/* Columns Row */}
+            <div className="flex flex-1 divide-x divide-border/60 min-h-[58vh]">
+              {STAGES.map((stage) => {
+                const stageDeals = deals.filter((d) => d.stage === stage.key);
 
-              return (
-                <div key={stage.key} className="flex-1 min-w-[200px] bg-white flex flex-col justify-between group">
-                  <div className="p-3 space-y-3 flex-1 overflow-y-auto max-h-[60vh] kanban-scrollbar">
-                    {stageDeals.length === 0 ? (
-                      <EmptyColumn stage={stage.label} />
-                    ) : (
-                      stageDeals.map((deal) => (
-                        <div
-                          key={deal.id}
-                          className="kanban-card p-4.5 space-y-3 group cursor-pointer bg-white border border-border/80 rounded-xl hover:shadow-[0_4px_16px_rgba(17,17,17,0.04)] transition-all duration-200"
-                          onClick={() => setViewingDeal(deal)}
-                        >
-                          <div className="space-y-1">
-                            <h4 className="text-sm font-semibold text-foreground/90 leading-relaxed break-words hover:text-foreground transition-colors">
-                              {deal.name}
-                            </h4>
-                            {deal.lead && (
-                              <p className="text-xs text-muted truncate flex items-center gap-1">
-                                <LinkIcon className="h-2.5 w-2.5 shrink-0 text-foreground/40" />
-                                {deal.lead.firstName} {deal.lead.lastName}
-                              </p>
-                            )}
-                          </div>
+                return (
+                  <div key={stage.key} className="flex-1 min-w-[200px] bg-white flex flex-col justify-between group">
+                    <div className="p-3 space-y-3 flex-1 overflow-y-auto max-h-[60vh] kanban-scrollbar">
+                      {stageDeals.length === 0 ? (
+                        <EmptyColumn stage={stage.label} />
+                      ) : (
+                        stageDeals.map((deal) => (
+                          <div
+                            key={deal.id}
+                            className="kanban-card p-4.5 space-y-3 group cursor-pointer bg-white border border-border/80 rounded-xl hover:shadow-[0_4px_16px_rgba(17,17,17,0.04)] transition-all duration-200"
+                            onClick={() => setViewingDeal(deal)}
+                          >
+                            <div className="space-y-1">
+                              <h4 className="text-sm font-semibold text-foreground/90 leading-relaxed break-words hover:text-foreground transition-colors">
+                                {deal.name}
+                              </h4>
+                              {deal.lead && (
+                                <p className="text-xs text-muted truncate flex items-center gap-1">
+                                  <LinkIcon className="h-2.5 w-2.5 shrink-0 text-foreground/40" />
+                                  {deal.lead.firstName} {deal.lead.lastName}
+                                </p>
+                              )}
+                            </div>
 
-                          <div className="text-sm font-bold text-foreground">
-                            {formatCurrency(deal.value)}
-                          </div>
+                            <div className="text-sm font-bold text-foreground">
+                              {formatCurrency(deal.value)}
+                            </div>
 
-                          <div className="text-xs text-muted flex items-center gap-1.5">
-                            <Calendar className="h-3 w-3 text-muted/60" />
-                            <span>
-                              {deal.expectedCloseDate ? `Expected close: ${formatDate(deal.expectedCloseDate)}` : "No close date"}
-                            </span>
-                          </div>
+                            <div className="text-xs text-muted flex items-center gap-1.5">
+                              <Calendar className="h-3 w-3 text-muted/60" />
+                              <span>
+                                {deal.expectedCloseDate ? `Expected close: ${formatDate(deal.expectedCloseDate)}` : "No close date"}
+                              </span>
+                            </div>
 
-                          {/* Choose action menu button */}
-                          <div className="flex items-center justify-between border-t border-border/50 pt-2.5 mt-2 flex-wrap gap-2">
-                            <button
-                              onClick={(e) => { e.stopPropagation(); setViewingDeal(deal); }}
-                              className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
-                            >
-                              Choose action
-                            </button>
-                            <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {/* Choose action menu button */}
+                            <div className="flex items-center justify-between border-t border-border/50 pt-2.5 mt-2 flex-wrap gap-2">
                               <button
-                                onClick={(e) => { e.stopPropagation(); openEdit(deal); }}
-                                className="h-5.5 w-5.5 flex items-center justify-center rounded bg-[#F4F5F1] hover:bg-primary/20 transition-colors cursor-pointer"
+                                onClick={(e) => { e.stopPropagation(); setViewingDeal(deal); }}
+                                className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
                               >
-                                <Pencil className="h-2.5 w-2.5 text-muted" />
+                                Choose action
                               </button>
-                              <button
-                                onClick={(e) => { e.stopPropagation(); handleDelete(deal.id); }}
-                                className="h-5.5 w-5.5 flex items-center justify-center rounded bg-[#F4F5F1] hover:bg-red-50 transition-colors cursor-pointer"
-                              >
-                                <Trash2 className="h-2.5 w-2.5 text-muted hover:text-red-600" />
-                              </button>
+                              <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); openEdit(deal); }}
+                                  className="h-5.5 w-5.5 flex items-center justify-center rounded bg-[#F4F5F1] hover:bg-primary/20 transition-colors cursor-pointer"
+                                >
+                                  <Pencil className="h-2.5 w-2.5 text-muted" />
+                                </button>
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); handleDelete(deal.id); }}
+                                  className="h-5.5 w-5.5 flex items-center justify-center rounded bg-[#F4F5F1] hover:bg-red-50 transition-colors cursor-pointer"
+                                >
+                                  <Trash2 className="h-2.5 w-2.5 text-muted hover:text-red-600" />
+                                </button>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
+                        ))
+                      )}
+                    </div>
 
-                  {/* Add Deal Column Shortcut */}
-                  <div className="p-3 border-t border-border/30 bg-[#fafbfa]/40">
-                    <button
-                      onClick={() => {
-                        setForm((f) => ({ ...f, stage: stage.key }));
-                        openCreate();
-                      }}
-                      className="w-full flex items-center justify-center gap-1 py-2 rounded-lg border border-dashed border-border/80 text-xs font-semibold text-muted/80 hover:text-foreground hover:border-border/120 hover:bg-[#F4F5F1] transition-all cursor-pointer"
-                    >
-                      <Plus className="h-3 w-3" /> Add deal
-                    </button>
+                    {/* Add Deal Column Shortcut */}
+                    <div className="p-3 border-t border-border/30 bg-[#fafbfa]/40">
+                      <button
+                        onClick={() => {
+                          setForm((f) => ({ ...f, stage: stage.key }));
+                          openCreate();
+                        }}
+                        className="w-full flex items-center justify-center gap-1 py-2 rounded-lg border border-dashed border-border/80 text-xs font-semibold text-muted/80 hover:text-foreground hover:border-border/120 hover:bg-[#F4F5F1] transition-all cursor-pointer"
+                      >
+                        <Plus className="h-3 w-3" /> Add deal
+                      </button>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </div>
       )}

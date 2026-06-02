@@ -356,88 +356,92 @@ export default function TasksPage() {
 
             return (
               <div key={task.id}
-                className={`py-6 flex items-start gap-6 transition-all duration-200 group ${task.status === "COMPLETED" ? "opacity-55 hover:opacity-75" : ""}`}
+                className={`py-6 flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-6 transition-all duration-200 group ${task.status === "COMPLETED" ? "opacity-55 hover:opacity-75" : ""}`}
               >
-                {/* Status Checkbox toggle */}
-                <button
-                  onClick={() => handleToggle(task)}
-                  disabled={isToggling}
-                  className={`mt-1 h-6 w-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-all cursor-pointer disabled:opacity-50 ${
-                    task.status === "COMPLETED" ? "bg-emerald-500/20 border-emerald-500" :
-                    task.status === "IN_PROGRESS" ? "bg-blue-500/10 border-blue-400 hover:border-blue-300" :
-                    "bg-[#F4F5F1] border-border hover:border-border"
-                  }`}
-                >
-                  {isToggling ? (
-                    <Loader2 className="h-2.5 w-2.5 animate-spin text-muted" />
-                  ) : task.status === "COMPLETED" ? (
-                    <div className="h-2 w-2 rounded-full bg-emerald-500" />
-                  ) : task.status === "IN_PROGRESS" ? (
-                    <div className="h-2 w-2 rounded-full bg-blue-450" />
-                  ) : null}
-                </button>
+                <div className="flex items-start gap-4 flex-1 min-w-0">
+                  {/* Status Checkbox toggle */}
+                  <button
+                    onClick={() => handleToggle(task)}
+                    disabled={isToggling}
+                    className={`mt-1 h-6 w-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-all cursor-pointer disabled:opacity-50 ${
+                      task.status === "COMPLETED" ? "bg-emerald-500/20 border-emerald-500" :
+                      task.status === "IN_PROGRESS" ? "bg-blue-500/10 border-blue-400 hover:border-blue-300" :
+                      "bg-[#F4F5F1] border-border hover:border-border"
+                    }`}
+                  >
+                    {isToggling ? (
+                      <Loader2 className="h-2.5 w-2.5 animate-spin text-muted" />
+                    ) : task.status === "COMPLETED" ? (
+                      <div className="h-2 w-2 rounded-full bg-emerald-500" />
+                    ) : task.status === "IN_PROGRESS" ? (
+                      <div className="h-2 w-2 rounded-full bg-blue-450" />
+                    ) : null}
+                  </button>
 
-                {/* Content */}
-                <div className="flex-1 min-w-0 space-y-1.5">
-                  <div className="flex items-start gap-2">
-                    <p className={`text-base font-bold leading-normal flex-1 transition-all ${task.status === "COMPLETED" ? "line-through text-muted" : "text-foreground"}`}>
-                      {task.title}
-                    </p>
-                  </div>
+                  {/* Content */}
+                  <div className="flex-1 min-w-0 space-y-1.5">
+                    <div className="flex items-start gap-2">
+                      <p className={`text-base font-bold leading-normal flex-1 transition-all ${task.status === "COMPLETED" ? "line-through text-muted" : "text-foreground"}`}>
+                        {task.title}
+                      </p>
+                    </div>
 
-                  {task.description && (
-                    <p className="text-sm text-muted leading-relaxed line-clamp-1">{task.description}</p>
-                  )}
-
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
-                    {/* Status pill */}
-                    <span className={`text-xs font-bold uppercase tracking-wide px-3 py-1 rounded-full border ${s.bg} ${s.color}`}>
-                      {s.label}
-                    </span>
-
-                    {/* Due date */}
-                    {task.dueDate && (
-                      <span className={`text-sm flex items-center gap-1.5 font-medium ${overdue ? "text-red-600" : "text-muted"}`}>
-                        <Calendar className="h-4 w-4 shrink-0 text-muted/60" />
-                        {overdue && <span className="font-bold">Overdue · </span>}
-                        {formatDate(task.dueDate)}
-                      </span>
+                    {task.description && (
+                      <p className="text-sm text-muted leading-relaxed line-clamp-1">{task.description}</p>
                     )}
 
-                    {/* Linked Lead */}
-                    {task.lead && (
-                      <span className="text-sm text-foreground/80 flex items-center gap-1.5 font-medium">
-                        <LinkIcon className="h-4 w-4 shrink-0 text-muted/50" />
-                        {task.lead.firstName} {task.lead.lastName || ""}
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+                      {/* Status pill */}
+                      <span className={`text-xs font-bold uppercase tracking-wide px-3 py-1 rounded-full border ${s.bg} ${s.color}`}>
+                        {s.label}
                       </span>
-                    )}
 
-                    {/* Linked Deal */}
-                    {task.deal && (
-                      <span className="text-sm text-amber-500/80 flex items-center gap-1.5 font-medium">
-                        <LinkIcon className="h-4 w-4 shrink-0 text-amber-400/65" />
-                        {task.deal.name}
-                      </span>
-                    )}
+                      {/* Due date */}
+                      {task.dueDate && (
+                        <span className={`text-sm flex items-center gap-1.5 font-medium ${overdue ? "text-red-600" : "text-muted"}`}>
+                          <Calendar className="h-4 w-4 shrink-0 text-muted/60" />
+                          {overdue && <span className="font-bold">Overdue · </span>}
+                          {formatDate(task.dueDate)}
+                        </span>
+                      )}
+
+                      {/* Linked Lead */}
+                      {task.lead && (
+                        <span className="text-sm text-foreground/80 flex items-center gap-1.5 font-medium">
+                          <LinkIcon className="h-4 w-4 shrink-0 text-muted/50" />
+                          {task.lead.firstName} {task.lead.lastName || ""}
+                        </span>
+                      )}
+
+                      {/* Linked Deal */}
+                      {task.deal && (
+                        <span className="text-sm text-amber-500/80 flex items-center gap-1.5 font-medium">
+                          <LinkIcon className="h-4 w-4 shrink-0 text-amber-400/65" />
+                          {task.deal.name}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
                 {/* Right controls */}
-                <div className="flex items-center gap-3 shrink-0">
-                  {assignee && (
-                    <div
-                      title={`${assignee.firstName || ""} ${assignee.lastName || ""}`.trim() || assignee.email}
-                      className="h-8 w-8 rounded-full bg-violet-600/10 border border-violet-500/20 flex items-center justify-center shrink-0"
-                    >
-                      <span className="text-xs font-bold text-violet-700">
-                        {getUserInitials(assignee.firstName, assignee.lastName)}
-                      </span>
-                    </div>
-                  )}
+                <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto pl-10 sm:pl-0 shrink-0">
+                  <div className="flex items-center gap-2">
+                    {assignee && (
+                      <div
+                        title={`${assignee.firstName || ""} ${assignee.lastName || ""}`.trim() || assignee.email}
+                        className="h-8 w-8 rounded-full bg-violet-600/10 border border-violet-500/20 flex items-center justify-center shrink-0"
+                      >
+                        <span className="text-xs font-bold text-violet-700">
+                          {getUserInitials(assignee.firstName, assignee.lastName)}
+                        </span>
+                      </div>
+                    )}
 
-                  <Badge variant={p.badgeVariant} className="px-3 py-1 font-bold text-xs tracking-wider uppercase">{p.label}</Badge>
+                    <Badge variant={p.badgeVariant} className="px-3 py-1 font-bold text-xs tracking-wider uppercase">{p.label}</Badge>
+                  </div>
 
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                     <button onClick={() => openEdit(task)}
                       className="h-6.5 w-6.5 flex items-center justify-center rounded-lg border border-border bg-[#F4F5F1] hover:bg-primary/20 hover:border-border transition-colors cursor-pointer">
                       <Pencil className="h-3 w-3 text-muted hover:text-foreground" />

@@ -265,7 +265,7 @@ export default function InvoiceForm() {
                   />
                 </div>
               </div>
-              <div className="col-span-3 md:col-span-2 flex items-center justify-end gap-2">
+              <div className="col-span-4 md:col-span-2 flex items-center justify-end gap-2">
                 <span className="text-sm font-semibold text-foreground">
                   ${(item.quantity * item.unitPrice).toFixed(2)}
                 </span>
@@ -273,7 +273,7 @@ export default function InvoiceForm() {
                   <button
                     type="button"
                     onClick={() => removeItem(item.id)}
-                    className="text-muted hover:text-red-500 transition-colors"
+                    className="text-muted hover:text-red-500 transition-colors cursor-pointer"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>

@@ -373,7 +373,7 @@ export default function LeadsPage() {
       {/* Main Grid: Leads List Table vs Sidebar Details */}
       <div className="grid lg:grid-cols-3 gap-6 items-start">
         {/* List of Leads */}
-        <div className="lg:col-span-2 space-y-3">
+        <div className={`lg:col-span-2 space-y-3 ${selectedLead ? "hidden lg:block" : ""}`}>
           {isLoading ? (
             // Skeleton Loader States
             Array.from({ length: 4 }).map((_, i) => (
@@ -455,43 +455,46 @@ export default function LeadsPage() {
         </div>
 
         {/* Sidebar Details Pane */}
-        <div className="lg:col-span-1">
+        <div className={`lg:col-span-1 ${!selectedLead ? "hidden lg:block" : ""}`}>
           {selectedLead ? (
             <Card className="sticky top-22 border-border">
-              <CardHeader className="flex flex-row items-start justify-between pb-4 border-b border-border">
-                <div className="overflow-hidden">
-                  <CardTitle className="truncate">
-                    {selectedLead.firstName} {selectedLead.lastName}
-                  </CardTitle>
-                  <CardDescription className="truncate mt-0.5">
-                    {selectedLead.company || "No Company Logged"}
-                  </CardDescription>
-                </div>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => openEditModal(selectedLead)}
-                    className="h-8 w-8 hover:bg-[rgba(17,17,17,0.04)] border border-border bg-[#F4F5F1]"
-                  >
-                    <Edit3 className="h-3.5 w-3.5 text-foreground" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDeleteLead(selectedLead.id)}
-                    className="h-8 w-8 hover:bg-red-50 group border border-border bg-[#F4F5F1]"
-                  >
-                    <Trash2 className="h-3.5 w-3.5 text-muted group-hover:text-red-600 transition-colors" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
+              <CardHeader className="pb-4 border-b border-border space-y-3">
+                <div className="lg:hidden">
+                  <button
+                    type="button"
                     onClick={() => setSelectedLead(null)}
-                    className="h-8 w-8 lg:hidden hover:bg-[rgba(17,17,17,0.04)] border border-border bg-[#F4F5F1]"
+                    className="inline-flex items-center gap-1 text-xs font-bold text-muted hover:text-foreground cursor-pointer"
                   >
-                    <X className="h-3.5 w-3.5 text-muted" />
-                  </Button>
+                    ← Back to leads list
+                  </button>
+                </div>
+                <div className="flex flex-row items-start justify-between gap-3">
+                  <div className="overflow-hidden">
+                    <CardTitle className="truncate">
+                      {selectedLead.firstName} {selectedLead.lastName}
+                    </CardTitle>
+                    <CardDescription className="truncate mt-0.5">
+                      {selectedLead.company || "No Company Logged"}
+                    </CardDescription>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => openEditModal(selectedLead)}
+                      className="h-8 w-8 hover:bg-[rgba(17,17,17,0.04)] border border-border bg-[#F4F5F1]"
+                    >
+                      <Edit3 className="h-3.5 w-3.5 text-foreground" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDeleteLead(selectedLead.id)}
+                      className="h-8 w-8 hover:bg-red-50 group border border-border bg-[#F4F5F1]"
+                    >
+                      <Trash2 className="h-3.5 w-3.5 text-muted group-hover:text-red-600 transition-colors" />
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-5 pt-4">
