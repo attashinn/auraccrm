@@ -33,18 +33,7 @@ async function resolveClerkMembershipRole(clerkOrgId: string, clerkUserId: strin
   }
 }
 
-/** Authenticated tenant context with self-healing Clerk ↔ Prisma sync. */
-export async function getActiveContext(): Promise<ActiveContext> {
-  const { orgId, userId } = await auth();
-
-  if (!userId) {
-    throw new Error("Unauthorized: Please sign in to access this resource.");
-  }
-
-  if (!orgId) {
-    throw new Error("Action Restricted: You must belong to and select an active organization workspace.");
-  }
-
+export async function ensureDbRecordsSynced(userId: string, orgId: string) {
   let dbUser = await db.user.findUnique({ where: { clerkId: userId } });
 
   if (!dbUser) {
@@ -118,6 +107,27 @@ export async function getActiveContext(): Promise<ActiveContext> {
     org: dbOrg,
     user: dbUser,
     membership: dbMembership,
+  };
+}
+
+/** Authenticated tenant context with self-healing Clerk ↔ Prisma sync. */
+export async function getActiveContext(): Promise<ActiveContext> {
+  const { orgId, userId } = await auth();
+
+  if (!userId) {
+    throw new Error("Unauthorized: Please sign in to access this resource.");
+  }
+
+  if (!orgId) {
+    throw new Error("Action Restricted: You must belong to and select an active organization workspace.");
+  }
+
+  const { org, user, membership } = await ensureDbRecordsSynced(userId, orgId);
+
+  return {
+    org,
+    user,
+    membership,
     clerkOrgId: orgId,
     clerkUserId: userId,
   };

@@ -12,6 +12,7 @@ import {
   type OnboardingData,
 } from "@/lib/validations/onboarding";
 import { revalidatePath } from "next/cache";
+import { ensureDbRecordsSynced } from "@/lib/auth-context";
 
 const TOTAL_STEPS = 5;
 
@@ -83,7 +84,7 @@ export async function getOnboardingStatusAction() {
       return { success: true as const, needsOnboarding: true, step: 1, totalSteps: TOTAL_STEPS, data };
     }
 
-    const org = await db.organization.findUnique({ where: { clerkId: orgId } });
+    const { org } = await ensureDbRecordsSynced(userId, orgId);
     if (!org || !org.onboardingCompleted) {
       const data = (org?.onboardingData as OnboardingData | null) ?? {};
       let step = 1;
@@ -182,13 +183,11 @@ export async function saveOnboardingStep3Action(input: unknown, draft: Onboardin
         update: { role: "OWNER" },
       });
     } else {
-      const org = await db.organization.findUnique({ where: { clerkId: clerkOrgId } });
-      if (org) {
-        await db.organization.update({
-          where: { id: org.id },
-          data: { onboardingData: toOnboardingJson(merged), name: companyName },
-        });
-      }
+      const { org } = await ensureDbRecordsSynced(clerkUserId, clerkOrgId);
+      await db.organization.update({
+        where: { id: org.id },
+        data: { onboardingData: toOnboardingJson(merged), name: companyName },
+      });
     }
 
     revalidatePath("/onboarding");
@@ -206,15 +205,13 @@ export async function saveOnboardingStep4Action(input: unknown, draft: Onboardin
     const parsed = onboardingStep4Schema.parse(input);
     const merged = { ...draft, ...parsed };
 
-    const { orgId } = await auth();
-    if (orgId) {
-      const org = await db.organization.findUnique({ where: { clerkId: orgId } });
-      if (org) {
-        await db.organization.update({
-          where: { id: org.id },
-          data: { onboardingData: toOnboardingJson(merged) },
-        });
-      }
+    const { userId, orgId } = await auth();
+    if (orgId && userId) {
+      const { org } = await ensureDbRecordsSynced(userId, orgId);
+      await db.organization.update({
+        where: { id: org.id },
+        data: { onboardingData: toOnboardingJson(merged) },
+      });
     }
 
     return { success: true as const, data: merged };
@@ -226,11 +223,10 @@ export async function saveOnboardingStep4Action(input: unknown, draft: Onboardin
 
 export async function completeOnboardingAction(draft: OnboardingData) {
   try {
-    const { orgId } = await auth();
-    if (!orgId) throw new Error("No active organization. Complete step 3 first.");
+    const { userId, orgId } = await auth();
+    if (!userId || !orgId) throw new Error("No active organization. Complete step 3 first.");
 
-    const org = await db.organization.findUnique({ where: { clerkId: orgId } });
-    if (!org) throw new Error("Organization not found");
+    const { org } = await ensureDbRecordsSynced(userId, orgId);
 
     await db.organization.update({
       where: { id: org.id },
