@@ -23,6 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Dialog } from "@/components/ui/dialog";
+import { Drawer } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -603,8 +604,8 @@ export default function LeadsPage() {
         </div>
       </div>
 
-      {/* Floating Create Lead Modal */}
-      <Dialog
+      {/* Floating Create Lead Drawer */}
+      <Drawer
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
         title="Log CRM Lead"
@@ -771,10 +772,10 @@ export default function LeadsPage() {
             </Button>
           </div>
         </form>
-      </Dialog>
+      </Drawer>
 
-      {/* Floating Edit Lead Modal */}
-      <Dialog
+      {/* Floating Edit Lead Drawer */}
+      <Drawer
         open={editModalOpen}
         onClose={() => setEditModalOpen(false)}
         title="Edit Lead Parameters"
@@ -941,7 +942,7 @@ export default function LeadsPage() {
             </Button>
           </div>
         </form>
-      </Dialog>
+      </Drawer>
     </div>
   );
 }

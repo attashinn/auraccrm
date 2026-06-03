@@ -1,5 +1,5 @@
 import { auth, currentUser, createClerkClient } from "@clerk/nextjs/server";
-import type { Membership, Organization, User } from "@prisma/client";
+import type { Membership, Organization, User, MembershipRole } from "@prisma/client";
 import { db } from "@/lib/db";
 import { mapClerkRoleToPrisma } from "@/lib/clerk-roles";
 
@@ -19,7 +19,7 @@ async function getClerkClient() {
   return createClerkClient({ secretKey });
 }
 
-async function resolveClerkMembershipRole(clerkOrgId: string, clerkUserId: string): Promise<"OWNER" | "ADMIN" | "MEMBER"> {
+async function resolveClerkMembershipRole(clerkOrgId: string, clerkUserId: string): Promise<MembershipRole> {
   try {
     const clerk = await getClerkClient();
     const { data } = await clerk.organizations.getOrganizationMembershipList({

@@ -11,6 +11,7 @@ enum MembershipRole {
   OWNER
   ADMIN
   MEMBER
+  VIEWER
 }
 
 enum InvoiceStatus {
@@ -70,6 +71,17 @@ model Organization {
   notes       Note[]
   invoices    Invoice[]
 
+  // WACRM Integration
+  whatsappConfigs   WhatsappConfig[]
+  conversations     Conversation[]
+  messages          Message[]
+  tags              Tag[]
+  customFields      CustomField[]
+  messageTemplates  MessageTemplate[]
+  broadcasts        Broadcast[]
+  automations       Automation[]
+  flows             Flow[]
+
   @@map("organizations")
 }
 
@@ -101,6 +113,7 @@ model Membership {
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   assignedTasks Task[]
   createdNotes  Note[]
+  conversations Conversation[]
 
   @@unique([userId, organizationId], name: "unique_user_org")
   @@index([organizationId])
@@ -152,7 +165,13 @@ model Contact {
   notes        Note[]
   invoices     Invoice[]
 
-  @@index([organizationId])
+  // WACRM Integration
+  conversations Conversation[]
+  tags          ContactTag[]
+  customValues  ContactCustomValue[]
+  recipients    BroadcastRecipient[]
+
+  @@index([organizationId, phone])
   @@map("contacts")
 }
 
@@ -176,6 +195,10 @@ model Deal {
   tasks         Task[]
   notesRelation Note[]
   invoices      Invoice[]
+
+  // WACRM Integration
+  conversationId String?        @map("conversation_id") @db.Uuid
+  conversation   Conversation?  @relation(fields: [conversationId], references: [id], onDelete: SetNull)
 
   @@index([organizationId, stage])
   @@map("deals")
@@ -277,4 +300,317 @@ model InvoiceItem {
 
   @@index([invoiceId])
   @@map("invoice_items")
+}
+
+// ==========================================
+// WACRM New Models Integration
+// ==========================================
+
+model WhatsappConfig {
+  id             String         @id @default(uuid()) @db.Uuid
+  organizationId String         @unique @map("organization_id") @db.Uuid
+  phoneNumberId  String         @unique @map("phone_number_id") @db.VarChar(255)
+  wabaId         String         @map("waba_id") @db.VarChar(255)
+  accessToken    String         @map("access_token") @db.Text
+  verifyToken    String         @map("verify_token") @db.VarChar(255)
+  status         String         @default("disconnected") @db.VarChar(50)
+  connectedAt    DateTime?      @map("connected_at") @db.Timestamptz
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime       @updatedAt @map("updated_at") @db.Timestamptz
+
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("whatsapp_configs")
+}
+
+model Conversation {
+  id             String         @id @default(uuid()) @db.Uuid
+  organizationId String         @map("organization_id") @db.Uuid
+  contactId      String         @map("contact_id") @db.Uuid
+  status         String         @default("open") @db.VarChar(50)
+  assignedAgentId String?       @map("assigned_agent_id") @db.Uuid
+  unreadCount    Int            @default(0) @map("unread_count")
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime       @updatedAt @map("updated_at") @db.Timestamptz
+
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  contact        Contact        @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  assignedAgent  Membership?    @relation(fields: [assignedAgentId], references: [id], onDelete: SetNull)
+  messages       Message[]
+  deals          Deal[]
+
+  @@unique([organizationId, contactId])
+  @@map("conversations")
+}
+
+model Message {
+  id                  String         @id @default(uuid()) @db.Uuid
+  organizationId      String         @map("organization_id") @db.Uuid
+  conversationId      String         @map("conversation_id") @db.Uuid
+  senderType          String         @map("sender_type") @db.VarChar(50)
+  contentType         String         @map("content_type") @db.VarChar(50)
+  content             String         @db.Text
+  metadata            Json?
+  status              String         @default("sending") @db.VarChar(50)
+  messageId           String?        @unique @map("message_id") @db.VarChar(255)
+  interactiveReplyId  String?        @map("interactive_reply_id") @db.VarChar(255)
+  errorMessage        String?        @map("error_message") @db.Text
+  createdAt           DateTime       @default(now()) @map("created_at") @db.Timestamptz
+
+  organization        Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  conversation        Conversation   @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@map("messages")
+}
+
+model Tag {
+  id             String         @id @default(uuid()) @db.Uuid
+  organizationId String         @map("organization_id") @db.Uuid
+  name           String         @db.VarChar(100)
+  color          String         @default("#E2E8F0") @db.VarChar(20)
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz
+
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  contacts       ContactTag[]
+
+  @@unique([organizationId, name])
+  @@map("tags")
+}
+
+model ContactTag {
+  contactId      String         @map("contact_id") @db.Uuid
+  tagId          String         @map("tag_id") @db.Uuid
+
+  contact        Contact        @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  tag            Tag            @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([contactId, tagId])
+  @@map("contact_tags")
+}
+
+model CustomField {
+  id             String         @id @default(uuid()) @db.Uuid
+  organizationId String         @map("organization_id") @db.Uuid
+  name           String         @db.VarChar(100)
+  type           String         @db.VarChar(50)
+  options        Json?
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz
+
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  values         ContactCustomValue[]
+
+  @@unique([organizationId, name])
+  @@map("custom_fields")
+}
+
+model ContactCustomValue {
+  id             String         @id @default(uuid()) @db.Uuid
+  contactId      String         @map("contact_id") @db.Uuid
+  customFieldId  String         @map("custom_field_id") @db.Uuid
+  value          String         @db.Text
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime       @updatedAt @map("updated_at") @db.Timestamptz
+
+  contact        Contact        @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  customField    CustomField    @relation(fields: [customFieldId], references: [id], onDelete: Cascade)
+
+  @@unique([contactId, customFieldId])
+  @@map("contact_custom_values")
+}
+
+model MessageTemplate {
+  id             String         @id @default(uuid()) @db.Uuid
+  organizationId String         @map("organization_id") @db.Uuid
+  name           String         @db.VarChar(255)
+  category       String         @db.VarChar(100)
+  language       String         @default("en_US") @db.VarChar(10)
+  headerType     String?        @map("header_type") @db.VarChar(50)
+  headerContent  String?        @map("header_content") @db.Text
+  bodyText       String         @map("body_text") @db.Text
+  footerText     String?        @map("footer_text") @db.Text
+  buttons        Json?
+  status         String         @default("Draft") @db.VarChar(50)
+  metaMetadata   Json?          @map("meta_metadata")
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime       @updatedAt @map("updated_at") @db.Timestamptz
+
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, name, language])
+  @@map("message_templates")
+}
+
+model Broadcast {
+  id             String         @id @default(uuid()) @db.Uuid
+  organizationId String         @map("organization_id") @db.Uuid
+  name           String         @db.VarChar(255)
+  templateName   String         @map("template_name") @db.VarChar(255)
+  templateLanguage String       @default("en_US") @map("template_language") @db.VarChar(10)
+  templateVariables Json?       @map("template_variables")
+  audienceFilter Json?          @map("audience_filter")
+  scheduledAt    DateTime?      @map("scheduled_at") @db.Timestamptz
+  status         String         @default("draft") @db.VarChar(50)
+  
+  totalRecipients Int           @default(0) @map("total_recipients")
+  sentCount      Int            @default(0) @map("sent_count")
+  deliveredCount Int            @default(0) @map("delivered_count")
+  readCount      Int            @default(0) @map("read_count")
+  repliedCount   Int            @default(0) @map("replied_count")
+  failedCount    Int            @default(0) @map("failed_count")
+
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime       @updatedAt @map("updated_at") @db.Timestamptz
+
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  recipients     BroadcastRecipient[]
+
+  @@map("broadcasts")
+}
+
+model BroadcastRecipient {
+  id             String         @id @default(uuid()) @db.Uuid
+  broadcastId    String         @map("broadcast_id") @db.Uuid
+  contactId      String         @map("contact_id") @db.Uuid
+  wamid          String?        @unique @db.VarChar(255)
+  status         String         @default("pending") @db.VarChar(50)
+  errorMessage   String?        @map("error_message") @db.Text
+  sentAt         DateTime?      @map("sent_at") @db.Timestamptz
+  deliveredAt    DateTime?      @map("delivered_at") @db.Timestamptz
+  readAt         DateTime?      @map("read_at") @db.Timestamptz
+  repliedAt      DateTime?      @map("replied_at") @db.Timestamptz
+
+  broadcast      Broadcast      @relation(fields: [broadcastId], references: [id], onDelete: Cascade)
+  contact        Contact        @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@index([broadcastId])
+  @@map("broadcast_recipients")
+}
+
+model Automation {
+  id             String         @id @default(uuid()) @db.Uuid
+  organizationId String         @map("organization_id") @db.Uuid
+  name           String         @db.VarChar(255)
+  description    String?        @db.Text
+  triggerType    String         @map("trigger_type") @db.VarChar(100)
+  triggerConfig  Json           @map("trigger_config")
+  isActive       Boolean        @default(false) @map("is_active")
+  executionCount Int            @default(0) @map("execution_count")
+  lastExecutedAt DateTime?      @map("last_executed_at") @db.Timestamptz
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime       @updatedAt @map("updated_at") @db.Timestamptz
+
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  steps          AutomationStep[]
+  logs           AutomationLog[]
+  pending        AutomationPendingExecution[]
+
+  @@map("automations")
+}
+
+model AutomationStep {
+  id             String         @id @default(uuid()) @db.Uuid
+  automationId   String         @map("automation_id") @db.Uuid
+  parentStepId   String?        @map("parent_step_id") @db.Uuid
+  branch         String?        @db.VarChar(10)
+  stepType       String         @map("step_type") @db.VarChar(100)
+  stepConfig     Json           @map("step_config")
+  position       Int            @default(0)
+
+  automation     Automation     @relation(fields: [automationId], references: [id], onDelete: Cascade)
+  parentStep     AutomationStep? @relation("StepHierarchy", fields: [parentStepId], references: [id], onDelete: Cascade)
+  subSteps       AutomationStep[] @relation("StepHierarchy")
+
+  @@map("automation_steps")
+}
+
+model AutomationLog {
+  id             String         @id @default(uuid()) @db.Uuid
+  automationId   String         @map("automation_id") @db.Uuid
+  triggeredBy    String         @map("triggered_by") @db.Uuid
+  status         String         @db.VarChar(50)
+  errorMessage   String?        @map("error_message") @db.Text
+  executedAt     DateTime       @default(now()) @map("executed_at") @db.Timestamptz
+
+  automation     Automation     @relation(fields: [automationId], references: [id], onDelete: Cascade)
+
+  @@map("automation_logs")
+}
+
+model AutomationPendingExecution {
+  id             String         @id @default(uuid()) @db.Uuid
+  automationId   String         @map("automation_id") @db.Uuid
+  contactId      String         @map("contact_id") @db.Uuid
+  nextExecutionAt DateTime      @map("next_execution_at") @db.Timestamptz
+  scheduledConfig Json          @map("scheduled_config")
+
+  automation     Automation     @relation(fields: [automationId], references: [id], onDelete: Cascade)
+
+  @@map("automation_pending_executions")
+}
+
+model Flow {
+  id             String         @id @default(uuid()) @db.Uuid
+  organizationId String         @map("organization_id") @db.Uuid
+  name           String         @db.VarChar(255)
+  description    String?        @db.Text
+  triggerConfig  Json           @map("trigger_config")
+  entryNodeKey   String         @map("entry_node_key") @db.VarChar(100)
+  fallbackPolicy String         @default("transfer_agent") @map("fallback_policy") @db.Text
+  isActive       Boolean        @default(false) @map("is_active")
+  executionCount Int            @default(0) @map("execution_count")
+  lastExecutedAt DateTime?      @map("last_executed_at") @db.Timestamptz
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime       @updatedAt @map("updated_at") @db.Timestamptz
+
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  nodes          FlowNode[]
+  runs           FlowRun[]
+
+  @@map("flows")
+}
+
+model FlowNode {
+  id             String         @id @default(uuid()) @db.Uuid
+  flowId         String         @map("flow_id") @db.Uuid
+  nodeKey        String         @map("node_key") @db.VarChar(100)
+  nodeType       String         @map("node_type") @db.VarChar(100)
+  config         Json
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime       @updatedAt @map("updated_at") @db.Timestamptz
+
+  flow           Flow           @relation(fields: [flowId], references: [id], onDelete: Cascade)
+
+  @@unique([flowId, nodeKey])
+  @@map("flow_nodes")
+}
+
+model FlowRun {
+  id             String         @id @default(uuid()) @db.Uuid
+  flowId         String         @map("flow_id") @db.Uuid
+  contactId      String         @map("contact_id") @db.Uuid
+  currentNodeKey String         @map("current_node_key") @db.VarChar(100)
+  status         String         @default("active") @db.VarChar(50)
+  metadata       Json?
+  startedAt      DateTime       @default(now()) @map("started_at") @db.Timestamptz
+  updatedAt      DateTime       @updatedAt @map("updated_at") @db.Timestamptz
+
+  flow           Flow           @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  events         FlowRunEvent[]
+
+  @@unique([contactId, status])
+  @@map("flow_runs")
+}
+
+model FlowRunEvent {
+  id             String         @id @default(uuid()) @db.Uuid
+  flowRunId      String         @map("flow_run_id") @db.Uuid
+  eventType      String         @map("event_type") @db.VarChar(100)
+  messageId      String?        @map("message_id") @db.VarChar(255)
+  payload        Json?
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz
+
+  flowRun        FlowRun        @relation(fields: [flowRunId], references: [id], onDelete: Cascade)
+
+  @@map("flow_run_events")
 }

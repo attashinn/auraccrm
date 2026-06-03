@@ -17,6 +17,11 @@ import {
   Search,
   Loader2,
   FileText,
+  MessageSquare,
+  Megaphone,
+  Zap,
+  Network,
+  Settings
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { clerkLightAppearance } from "@/lib/clerk-appearance";
@@ -27,15 +32,22 @@ interface NavItem {
   name: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
+  badge?: string;
 }
 
 const navigation: NavItem[] = [
   { name: "Overview", href: "/dashboard", icon: BarChart3 },
+  { name: "Inbox", href: "/dashboard/inbox", icon: MessageSquare },
+  { name: "Contacts", href: "/dashboard/contacts", icon: Users2 },
   { name: "Leads", href: "/dashboard/leads", icon: Users2 },
   { name: "Deals", href: "/dashboard/deals", icon: DollarSign },
   { name: "Tasks", href: "/dashboard/tasks", icon: CheckSquare },
+  { name: "Broadcasts", href: "/dashboard/broadcasts", icon: Megaphone },
+  { name: "Automations", href: "/dashboard/automations", icon: Zap },
+  { name: "Flows", href: "/dashboard/flows", icon: Network, badge: "Beta" },
   { name: "Invoices", href: "/dashboard/invoices", icon: FileText },
   { name: "Organization", href: "/dashboard/organization", icon: Building2 },
+  { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
 function Logo() {
@@ -124,6 +136,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <div className={navLinkClass(active)}>
                   <Icon className="h-5 w-5" />
                   <span>{item.name}</span>
+                  {item.badge && (
+                    <span className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/25 text-foreground uppercase tracking-wider">
+                      {item.badge}
+                    </span>
+                  )}
                 </div>
               </Link>
             );
@@ -175,6 +192,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       <div className={navLinkClass(active)}>
                         <Icon className="h-4 w-4" />
                         <span>{item.name}</span>
+                        {item.badge && (
+                          <span className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/25 text-foreground uppercase tracking-wider">
+                            {item.badge}
+                          </span>
+                        )}
                       </div>
                     </Link>
                   );
