@@ -168,7 +168,7 @@ export async function sendInvoiceEmail(params: SendInvoiceEmailParams) {
   const html = buildInvoiceHTML(params);
 
   const { data, error } = await resend.emails.send({
-    from: "AuraCRM Invoices <onboarding@resend.dev>",
+    from: "AuraCRM Invoices <invoices@auracrm.brnnd.com>",
     to: [to],
     subject: `Invoice ${invoiceNumber} from ${senderOrgName} — $${Number(total).toFixed(2)} Due`,
     html,
